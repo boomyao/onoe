@@ -16,7 +16,6 @@
   "packageManager": "pnpm@7.15.0",
   "name": "onoe",
   "dependencies": {
-    "@onoe/lander": "workspace:^",
-    "idb": "^7.1.1"
+    "@onoe/lander": "workspace:^"
   }
 }
