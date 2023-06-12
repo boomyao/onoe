@@ -1,48 +1,18 @@
-import { OpenAI } from 'langchain/llms/openai'
-import { ChatOpenAI } from 'langchain/chat_models/openai'
-import { BufferMemory, ChatMessageHistory } from "langchain/memory";
-import { ConversationChain } from "langchain/chains";
-import { useEffect } from 'react';
-import { AzureApiKey } from './llm/constants';
-import { OpenAIEmbeddings } from "langchain/embeddings/openai";
-import { MemoryVectorStore } from "langchain/vectorstores/memory";
-import { Document } from 'langchain/document'
-import { ChatPromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder, SystemMessagePromptTemplate } from 'langchain/prompts';
-import { AIChatMessage, HumanChatMessage } from 'langchain/schema';
 
-const openaiEmbeddings = new OpenAIEmbeddings({
-    azureOpenAIApiKey: AzureApiKey,
-    modelName: "text-embedding-ada-002",
-    azureOpenAIApiInstanceName: "cev-openai",
-    azureOpenAIApiVersion: "2023-05-15",
-    azureOpenAIApiDeploymentName: "embedding",
-});
+import { ChatOpenAI } from 'langchain/chat_models/openai'
+import { BufferMemory } from "langchain/memory";
+import { ConversationChain } from "langchain/chains";
+import { OpenAIEmbeddings } from "langchain/embeddings/openai";
+import { ChatPromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder, SystemMessagePromptTemplate } from 'langchain/prompts';
+import { IDBVectorStore } from './idb-vector-store';
+import ChatUI, { Bubble, useMessages } from '@chatui/core';
+import '@chatui/core/dist/index.css';
+
+const openaiEmbeddings = new OpenAIEmbeddings();
 const model = new ChatOpenAI({
-    azureOpenAIApiKey: AzureApiKey,
-    modelName: "gpt-3.5-turbo-0301",
-    azureOpenAIApiInstanceName: "cev-openai",
-    azureOpenAIApiVersion: "2023-03-15-preview",
-    azureOpenAIApiDeploymentName: "dev",
     temperature: 0.3,
 });
-const vectorStore = new MemoryVectorStore(openaiEmbeddings);
-const documents = [new Document({ pageContent: `
-commits:
-- author: changfeng
-  date: '2023-03-27T09:43:35Z'
-  id: a6ec8b3ab502ce886406ad247e897aeca59ce62f
-  message: "feat: \u5B8C\u6210\u53D1\u5305\u811A\u672C"
-content: "module.exports = {\n    extends: '@commitlint/config-conventional',\n  \
-  \  rules: {\n        'type-enum': [\n            2,\n            'always',\n   \
-  \         [\n                'build',\n                'chore',\n              \
-  \  'ci',\n                'docs',\n                'feat',\n                'fix',\n\
-  \                'perf',\n                'refactor',\n                'revert',\n\
-  \                'style',\n                'test',\n                'release',\n\
-  \                'wip',\n            ],\n        ],\n    },\n};\n"
-file_path: .commitlintrc.js
-name: editor-next
-version: 1.0.0
-`  })]
+const vectorStore = new IDBVectorStore(openaiEmbeddings);
 
 const promptTemplate = ChatPromptTemplate.fromPromptMessages([
     SystemMessagePromptTemplate.fromTemplate(
@@ -52,31 +22,54 @@ const promptTemplate = ChatPromptTemplate.fromPromptMessages([
         {context}
         `
       ),
-    // new MessagesPlaceholder('history'),
+    new MessagesPlaceholder('history'),
     HumanMessagePromptTemplate.fromTemplate(`Human: {input}`),
 ])
 
 const memory = new BufferMemory({
-    inputKey: 'input'
+    inputKey: 'input',
+    returnMessages: true,
 });
 const chain = new ConversationChain({ llm: model, memory, prompt: promptTemplate });
-window["chain"] = chain;
-window["memory"] = memory;
-window["vectorStore"] = vectorStore;
 
 export function Chat() {
-    async function onClick() {
-        const input = '谁制定了editor-next的commit规范？'
-        await vectorStore.addDocuments(documents)
-        const retriever = vectorStore.asRetriever(1);
-        const relevant = await retriever.getRelevantDocuments(input);
-        const context = relevant.map((r) => r.pageContent).join("\n");
-        const aiRes = await chain.call({ context, input })
-        console.log(aiRes)
+    const { messages, appendMsg, setTyping } = useMessages([]);
+
+    async function handleSend(type, val) {
+        if (type === 'text' && val.trim()) {
+            appendMsg({
+                type: 'text',
+                content: { text: val },
+                position: 'right',
+            });
+
+            const retriever = vectorStore.asRetriever(1);
+            const relevant = await retriever.getRelevantDocuments(val);
+            const context = relevant.map((r) => r.pageContent).join("\n");
+            setTyping(true);
+            const aiRes = await chain.call({ context, input: val })
+            setTyping(false);
+            appendMsg({
+                type: 'text',
+                content: { text: aiRes.response },
+                position: 'left',
+            });
+        }
     }
+
+    function renderMessageContent(msg) {
+        const { content } = msg;
+        return <Bubble content={content.text} />;
+    }
+
     return (
         <div>
-            <button onClick={onClick}>todo</button>
+            <ChatUI
+                navbar={{ title: 'Assistant' }}
+                messages={messages}
+                renderMessageContent={renderMessageContent}
+                onSend={handleSend}
+                />
         </div>
     )
 }
