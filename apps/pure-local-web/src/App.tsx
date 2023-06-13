@@ -1,14 +1,16 @@
-import { useState } from 'react'
+import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { Chat } from './chat'
+import { Embeddings } from './embeddings'
+
+const router = createBrowserRouter([
+  { path: '/chat', element: <Chat /> },
+  { path: '/embeddings', element: <Embeddings /> },
+])
 
 function App() {
 
   return (
-    <>
-      <div>
-        <Chat />
-      </div>
-    </>
+    <RouterProvider router={router} />
   )
 }
 

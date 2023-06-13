@@ -2,17 +2,15 @@
 import { ChatOpenAI } from 'langchain/chat_models/openai'
 import { BufferMemory } from "langchain/memory";
 import { ConversationChain } from "langchain/chains";
-import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { ChatPromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder, SystemMessagePromptTemplate } from 'langchain/prompts';
-import { IDBVectorStore } from './idb-vector-store';
 import ChatUI, { Bubble, useMessages } from '@chatui/core';
 import '@chatui/core/dist/index.css';
+import { vectorStore } from './gas/vector-store';
 
-const openaiEmbeddings = new OpenAIEmbeddings();
 const model = new ChatOpenAI({
     temperature: 0.3,
 });
-const vectorStore = new IDBVectorStore(openaiEmbeddings);
+
 
 const promptTemplate = ChatPromptTemplate.fromPromptMessages([
     SystemMessagePromptTemplate.fromTemplate(
