@@ -1,5 +1,5 @@
 import { ChangeEvent, useRef } from "react"
-import { vectorStore } from "./gas/vector-store";
+import { vectorStore } from "../gas/vector-store";
 import { Document } from "langchain/document";
 
 export function Embeddings() {

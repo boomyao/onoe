@@ -5,7 +5,7 @@ import { ConversationChain } from "langchain/chains";
 import { ChatPromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder, SystemMessagePromptTemplate } from 'langchain/prompts';
 import ChatUI, { Bubble, useMessages } from '@chatui/core';
 import '@chatui/core/dist/index.css';
-import { vectorStore } from './gas/vector-store';
+import { vectorStore } from '../gas/vector-store';
 
 const model = new ChatOpenAI({
     temperature: 0.3,

@@ -25,12 +25,16 @@ export class IDBVectorStore extends VectorStore {
 
   private db!: IDBPDatabase<IDBVectorSchema>;
   private readonly maxSizeInMB = 2048;
+  private readonly scoreThreshold: number;
 
   constructor(
     embeddings: Embeddings,
+    scoreThreshold = 0.5,
     { ...rest } = {}
   ) {
     super(embeddings, rest);
+
+    this.scoreThreshold = scoreThreshold;
 
     this.loadFromIndexDbStorage();
   }
@@ -82,7 +86,8 @@ export class IDBVectorStore extends VectorStore {
         index,
       }))
       .sort((a, b) => (a.similarity > b.similarity ? -1 : 0))
-      .slice(0, k);
+      .slice(0, k)
+      .filter((search) => search.similarity >= this.scoreThreshold);
 
     this.updateHitCounters(searches.map((search) => filteredVectors[search.index]));
 

@@ -1,5 +1,5 @@
 import { type ChangeEvent, useState } from "react"
-import { vectorStore } from "./gas/vector-store"
+import { vectorStore } from "../gas/vector-store"
 import { Document } from "langchain/document"
 
 export function Create() {

@@ -1,7 +1,7 @@
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
-import { Chat } from './chat'
-import { Embeddings } from './embeddings'
-import { Create } from './create'
+import { Chat } from './pages/chat'
+import { Embeddings } from './pages/embeddings'
+import { Create } from './pages/create'
 
 const router = createBrowserRouter([
   { path: '/chat', element: <Chat /> },
